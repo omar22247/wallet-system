@@ -1,0 +1,15 @@
+# secrets
+.env
+keys/
+
+# dev only
+docker-compose.override.yml
+
+# build
+target/
+*.log
+
+# IDE
+.idea/
+*.iml
+.vscode/
