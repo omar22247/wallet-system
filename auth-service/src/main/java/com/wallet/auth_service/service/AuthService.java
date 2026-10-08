@@ -1,21 +1,25 @@
 package com.wallet.auth_service.service;
 
-import com.wallet.auth_service.dto.reponse.LoginResponse;
-import com.wallet.auth_service.dto.reponse.UserResponse;
+import com.wallet.auth_service.dto.response.LoginResponse;
+import com.wallet.auth_service.dto.response.UserResponse;
+import com.wallet.auth_service.dto.request.ChangePasswordRequest;
 import com.wallet.auth_service.dto.request.LoginRequest;
 import com.wallet.auth_service.dto.request.RegisterRequest;
 import com.wallet.auth_service.entity.User;
 import com.wallet.auth_service.exception.EmailAlreadyUsedException;
+import com.wallet.auth_service.exception.InvalidPasswordChangeException;
 import com.wallet.auth_service.repository.UserRepository;
 import com.wallet.auth_service.security.SecurityUser;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.authentication.*;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -53,5 +57,26 @@ public class AuthService {
 
         SecurityUser user = (SecurityUser) authentication.getPrincipal();
         return tokenService.issueAccessToken(user);
+    }
+
+    public void changePassword(UUID userId, ChangePasswordRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new BadCredentialsException("User not found"));
+
+        verifyCurrentPassword(user.getEmail(), request.currentPassword());
+
+        if (request.newPassword().equals(request.currentPassword())) {
+            throw new InvalidPasswordChangeException("New password must be different from the current one");
+        }
+
+        userRepository.updatePasswordHash(user.getId(), passwordEncoder.encode(request.newPassword()));
+   }
+    private void verifyCurrentPassword(String email, String password) {
+        try {
+            authenticationManager.authenticate(
+                    UsernamePasswordAuthenticationToken.unauthenticated(email, password));
+        } catch (BadCredentialsException e) {
+            throw new InvalidPasswordChangeException("Current password is incorrect");
+        }
     }
 }

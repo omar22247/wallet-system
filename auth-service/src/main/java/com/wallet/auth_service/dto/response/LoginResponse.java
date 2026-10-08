@@ -1,4 +1,4 @@
-package com.wallet.auth_service.dto.reponse;
+package com.wallet.auth_service.dto.response;
 
 public record LoginResponse(
         String accessToken,

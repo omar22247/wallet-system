@@ -54,6 +54,10 @@ public class GlobalExceptionHandler {
         return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Authentication required");
     }
 
+    @ExceptionHandler(InvalidPasswordChangeException.class)
+    public ProblemDetail handleInvalidPasswordChange(InvalidPasswordChangeException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
     @ExceptionHandler(InvalidBearerTokenException.class)
     public ProblemDetail handleInvalidToken(InvalidBearerTokenException ex) {
         return ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, "Invalid or expired token");

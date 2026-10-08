@@ -5,6 +5,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -31,4 +32,9 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("update User u set u.failedLoginAttempts = 0, u.lockedUntil = null where u.email = :email")
     int resetFailedAttempts(@Param("email") String email);
+
+    @Transactional
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("update User u set u.passwordHash = :hash where u.id = :id")
+    int updatePasswordHash(@Param("id") UUID id, @Param("hash") String hash);
 }

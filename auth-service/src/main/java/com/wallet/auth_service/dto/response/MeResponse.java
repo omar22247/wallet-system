@@ -1,4 +1,4 @@
-package com.wallet.auth_service.dto.reponse;
+package com.wallet.auth_service.dto.response;
 
 import org.springframework.security.oauth2.jwt.Jwt;
 

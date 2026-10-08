@@ -16,8 +16,8 @@ import java.time.Instant;
 @RequiredArgsConstructor
 public class LoginAttemptListener {
 
-    private static final int MAX_FAILED_ATTEMPTS = 5;
-    private static final Duration LOCK_DURATION = Duration.ofMinutes(15);
+    private   static final int MAX_FAILED_ATTEMPTS = 5;
+    private  static final Duration LOCK_DURATION = Duration.ofMinutes(15);
 
     private final UserRepository userRepository;
 

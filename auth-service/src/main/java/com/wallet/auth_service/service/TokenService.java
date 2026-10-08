@@ -2,7 +2,7 @@ package com.wallet.auth_service.service;
 
 import com.nimbusds.jose.jwk.RSAKey;
 import com.wallet.auth_service.config.JwtProperties;
-import com.wallet.auth_service.dto.reponse.LoginResponse;
+import com.wallet.auth_service.dto.response.LoginResponse;
 import com.wallet.auth_service.security.SecurityUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
