@@ -8,8 +8,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Map;
 
-// الـ gateway بتجيب الـ public key من هنا علشان تعمل verify للـ tokens.
-// toPublicJWK() بيشيل الـ private key parts، فمستحيل الـ private key يطلع من هنا
 @RestController
 @RequiredArgsConstructor
 public class JwksController {
