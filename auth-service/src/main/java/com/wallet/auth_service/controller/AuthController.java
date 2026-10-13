@@ -36,8 +36,9 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request, @RequestParam @Min(1) int page) {
+    public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
         LoginResponse tokens = authService.login(request);
+        System.out.println("request: " + request);
         return ResponseEntity.ok(ApiResponse.success("Login successful", tokens));
     }
 
