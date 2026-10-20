@@ -4,6 +4,7 @@ import com.wallet.wallet_service.dto.response.PageResponse;
 import com.wallet.wallet_service.dto.response.TransactionResponse;
 import com.wallet.wallet_service.dto.response.WalletResponse;
 import com.wallet.wallet_service.entity.Wallet;
+import com.wallet.wallet_service.exception.TransactionNotFoundException;
 import com.wallet.wallet_service.repository.LedgerEntryRepository;
 import com.wallet.wallet_service.repository.WalletRepository;
 import org.slf4j.Logger;
@@ -57,5 +58,13 @@ public class WalletService {
                 ledgerEntryRepository.findHistory(wallet.getId(), PageRequest.of(page, size)),
                 TransactionResponse::of
         );
+    }
+    public TransactionResponse getMyTransaction(UUID userId, UUID transactionId) {
+        Wallet wallet = walletRepository.findByUserId(userId)
+                .orElseThrow(TransactionNotFoundException::new);
+
+        return ledgerEntryRepository.findByIdAndWalletId(transactionId, wallet.getId())
+                .map(TransactionResponse::of)
+                .orElseThrow(TransactionNotFoundException::new);
     }
 }

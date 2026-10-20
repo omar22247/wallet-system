@@ -71,7 +71,10 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .body(ApiResponse.error(message));
     }
 
-
+    @ExceptionHandler(TransactionNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleTransactionNotFound(TransactionNotFoundException ex) {
+        return error(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
     @ExceptionHandler(InsufficientAuthenticationException.class)
     public ResponseEntity<ApiResponse<Void>> handleMissingToken(InsufficientAuthenticationException ex) {
         return error(HttpStatus.UNAUTHORIZED, "Authentication required");

@@ -10,6 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface LedgerEntryRepository extends JpaRepository<LedgerEntry, UUID> {
@@ -35,4 +36,7 @@ public interface LedgerEntryRepository extends JpaRepository<LedgerEntry, UUID> 
             order by e.createdAt desc, e.id desc
             """)
     Page<LedgerEntry> findHistory(@Param("walletId") UUID walletId, Pageable pageable);
+
+    @EntityGraph(attributePaths = "journalEntry")
+    Optional<LedgerEntry> findByIdAndWalletId(UUID id, UUID walletId);
 }
