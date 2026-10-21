@@ -1,9 +1,8 @@
 package com.wallet.wallet_service.dto.response;
 
 import com.wallet.wallet_service.entity.EntryType;
-import com.wallet.wallet_service.entity.JournalEntry;
 import com.wallet.wallet_service.entity.JournalType;
-import com.wallet.wallet_service.entity.LedgerEntry;
+import com.wallet.wallet_service.repository.projection.TransactionRow;
 
 import java.time.Instant;
 import java.util.UUID;
@@ -14,17 +13,18 @@ public record TransactionResponse(
         String direction,
         String amount,
         String description,
+        CounterpartyResponse counterparty,
         Instant createdAt
 ) {
-    public static TransactionResponse of(LedgerEntry e) {
-        JournalEntry journal = e.getJournalEntry();
+    public static TransactionResponse of(TransactionRow row) {
         return new TransactionResponse(
-                e.getId(),
-                journal.getType(),
-                e.getEntryType() == EntryType.CREDIT ? "IN" : "OUT",
-                e.getAmount().toPlainString(),
-                journal.getDescription(),
-                e.getCreatedAt()
+                row.id(),
+                row.type(),
+                row.entryType() == EntryType.CREDIT ? "IN" : "OUT",
+                row.amount().toPlainString(),
+                row.description(),
+                CounterpartyResponse.of(row.counterpartyType(), row.counterpartyUserId()),
+                row.createdAt()
         );
     }
 }

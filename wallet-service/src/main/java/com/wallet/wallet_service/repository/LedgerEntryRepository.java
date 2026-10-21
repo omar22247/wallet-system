@@ -2,6 +2,7 @@ package com.wallet.wallet_service.repository;
 
 import com.wallet.wallet_service.entity.EntryType;
 import com.wallet.wallet_service.entity.LedgerEntry;
+import com.wallet.wallet_service.repository.projection.TransactionRow;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
@@ -29,14 +30,36 @@ public interface LedgerEntryRepository extends JpaRepository<LedgerEntry, UUID> 
     }
 
 
-    @EntityGraph(attributePaths = "journalEntry")
-    @Query("""
-            select e from LedgerEntry e
-            where e.wallet.id = :walletId
-            order by e.createdAt desc, e.id desc
-            """)
-    Page<LedgerEntry> findHistory(@Param("walletId") UUID walletId, Pageable pageable);
+    @Query(value = """
+            select new com.wallet.wallet_service.repository.projection.TransactionRow(
+                mine.id, j.type, mine.entryType, mine.amount, j.description,
+                otherWallet.type, otherWallet.userId, mine.createdAt)
+            from LedgerEntry mine
+            join mine.journalEntry j
+            join LedgerEntry other
+                 on other.journalEntry = mine.journalEntry
+                and other.entryType <> mine.entryType
+            join other.wallet otherWallet
+            where mine.wallet.id = :walletId
+            order by mine.createdAt desc, mine.id desc
+            """,
+            countQuery = "select count(e) from LedgerEntry e where e.wallet.id = :walletId")
+    Page<TransactionRow> findHistory(@Param("walletId") UUID walletId, Pageable pageable);
 
+    @Query("""
+            select new com.wallet.wallet_service.repository.projection.TransactionRow(
+                mine.id, j.type, mine.entryType, mine.amount, j.description,
+                otherWallet.type, otherWallet.userId, mine.createdAt)
+            from LedgerEntry mine
+            join mine.journalEntry j
+            join LedgerEntry other
+                 on other.journalEntry = mine.journalEntry
+                and other.entryType <> mine.entryType
+            join other.wallet otherWallet
+            where mine.id = :id
+              and mine.wallet.id = :walletId
+            """)
+    Optional<TransactionRow> findTransaction(@Param("id") UUID id, @Param("walletId") UUID walletId);
     @EntityGraph(attributePaths = "journalEntry")
     Optional<LedgerEntry> findByIdAndWalletId(UUID id, UUID walletId);
 }

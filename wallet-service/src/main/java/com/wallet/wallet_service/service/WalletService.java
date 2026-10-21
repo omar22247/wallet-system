@@ -7,10 +7,12 @@ import com.wallet.wallet_service.entity.Wallet;
 import com.wallet.wallet_service.exception.TransactionNotFoundException;
 import com.wallet.wallet_service.repository.LedgerEntryRepository;
 import com.wallet.wallet_service.repository.WalletRepository;
+import com.wallet.wallet_service.repository.projection.TransactionRow;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -53,17 +55,22 @@ public class WalletService {
     }
 
     public PageResponse<TransactionResponse> getMyTransactions(UUID userId, int page, int size) {
-        Wallet wallet = getOrCreate(userId);
-        return PageResponse.of(
-                ledgerEntryRepository.findHistory(wallet.getId(), PageRequest.of(page, size)),
-                TransactionResponse::of
-        );
+        Pageable pageable = PageRequest.of(page, size);
+
+        return walletRepository.findByUserId(userId)
+                .map(wallet -> PageResponse.of(
+                        ledgerEntryRepository.findHistory(wallet.getId(), pageable),
+                        TransactionResponse::of))
+                .orElseGet(() -> PageResponse.of(
+                        Page.<TransactionRow>empty(pageable),
+                        TransactionResponse::of));
     }
+
     public TransactionResponse getMyTransaction(UUID userId, UUID transactionId) {
         Wallet wallet = walletRepository.findByUserId(userId)
                 .orElseThrow(TransactionNotFoundException::new);
 
-        return ledgerEntryRepository.findByIdAndWalletId(transactionId, wallet.getId())
+        return ledgerEntryRepository.findTransaction(transactionId, wallet.getId())
                 .map(TransactionResponse::of)
                 .orElseThrow(TransactionNotFoundException::new);
     }
