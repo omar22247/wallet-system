@@ -32,7 +32,7 @@ public interface LedgerEntryRepository extends JpaRepository<LedgerEntry, UUID> 
 
     @Query(value = """
             select new com.wallet.wallet_service.repository.projection.TransactionRow(
-                mine.id, j.type, mine.entryType, mine.amount, j.description,
+                j.id, j.type, mine.entryType, mine.amount, j.description,
                 otherWallet.type, otherWallet.userId, mine.createdAt)
             from LedgerEntry mine
             join mine.journalEntry j
@@ -41,14 +41,14 @@ public interface LedgerEntryRepository extends JpaRepository<LedgerEntry, UUID> 
                 and other.entryType <> mine.entryType
             join other.wallet otherWallet
             where mine.wallet.id = :walletId
-            order by mine.createdAt desc, mine.id desc
+            order by mine.createdAt desc, j.id desc
             """,
             countQuery = "select count(e) from LedgerEntry e where e.wallet.id = :walletId")
     Page<TransactionRow> findHistory(@Param("walletId") UUID walletId, Pageable pageable);
 
     @Query("""
             select new com.wallet.wallet_service.repository.projection.TransactionRow(
-                mine.id, j.type, mine.entryType, mine.amount, j.description,
+                j.id, j.type, mine.entryType, mine.amount, j.description,
                 otherWallet.type, otherWallet.userId, mine.createdAt)
             from LedgerEntry mine
             join mine.journalEntry j
@@ -56,10 +56,11 @@ public interface LedgerEntryRepository extends JpaRepository<LedgerEntry, UUID> 
                  on other.journalEntry = mine.journalEntry
                 and other.entryType <> mine.entryType
             join other.wallet otherWallet
-            where mine.id = :id
+            where j.id = :journalId
               and mine.wallet.id = :walletId
             """)
-    Optional<TransactionRow> findTransaction(@Param("id") UUID id, @Param("walletId") UUID walletId);
+    Optional<TransactionRow> findTransaction(@Param("journalId") UUID journalId,
+                                             @Param("walletId") UUID walletId);
     @EntityGraph(attributePaths = "journalEntry")
     Optional<LedgerEntry> findByIdAndWalletId(UUID id, UUID walletId);
 }

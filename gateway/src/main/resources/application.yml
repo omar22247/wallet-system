@@ -52,7 +52,16 @@ spring:
                     redis-rate-limiter.burstCapacity: 20
                     redis-rate-limiter.requestedTokens: 1
                     key-resolver: "#{@clientKeyResolver}"
-
+            - id: wallet-service
+              uri: ${WALLET_SERVICE_URL:http://localhost:8082}
+              predicates:
+                - Path=/api/wallets/**, /api/admin/wallets/**
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 10
+                    redis-rate-limiter.burstCapacity: 20
+                    key-resolver: "#{@clientKeyResolver}"
 gateway:
   jwt:
     issuer: wallet-auth-service

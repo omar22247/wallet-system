@@ -96,16 +96,25 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return error(HttpStatus.FORBIDDEN, "Access denied");
     }
 
-
     @ExceptionHandler(WalletNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleWalletNotFound(WalletNotFoundException ex) {
+        log.warn("Wallet not found for user={}", ex.getUserId());
         return error(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
     @ExceptionHandler(WalletNotActiveException.class)
     public ResponseEntity<ApiResponse<Void>> handleWalletNotActive(WalletNotActiveException ex) {
+        log.warn("Wallet not active: wallet={}", ex.getWalletId());
         return error(HttpStatus.CONFLICT, ex.getMessage());
     }
+
+    @ExceptionHandler(RecipientCannotReceiveException.class)
+    public ResponseEntity<ApiResponse<Void>> handleRecipientCannotReceive(RecipientCannotReceiveException ex) {
+        log.warn("Recipient cannot receive: user={} reason={}", ex.getRecipientUserId());
+        return error(HttpStatus.UNPROCESSABLE_CONTENT, ex.getMessage());
+    }
+
+
 
 
     @ExceptionHandler(Exception.class)
@@ -114,6 +123,15 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return error(HttpStatus.INTERNAL_SERVER_ERROR, "Internal error");
     }
 
+    @ExceptionHandler(SelfTransferException.class)
+    public ResponseEntity<ApiResponse<Void>> handleSelfTransfer(SelfTransferException ex) {
+        return error(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(InsufficientBalanceException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInsufficientBalance(InsufficientBalanceException ex) {
+        return error(HttpStatus.UNPROCESSABLE_CONTENT, ex.getMessage());
+    }
     private static ResponseEntity<ApiResponse<Void>> error(HttpStatus status, String message) {
         return ResponseEntity.status(status).body(ApiResponse.error(message));
     }
@@ -122,5 +140,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         HttpStatus status = HttpStatus.resolve(code.value());
         return status != null ? status.getReasonPhrase() : "Error";
     }
+
 
 }
