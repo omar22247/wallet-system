@@ -33,9 +33,11 @@ public class TopUpService {
     @Transactional
     public TopUpResponse topUp(UUID adminId, TopUpRequest request) {
         Wallet target = walletRepository.findByUserId(request.userId())
-                .orElseThrow(() -> new WalletNotFoundException("Wallet not found for this user"));
+                .orElseThrow(
+                        () -> new WalletNotFoundException(request.userId())
+                );
         if (!target.isActive()) {
-            throw new WalletNotActiveException("Wallet is not active");
+            throw new WalletNotActiveException(target.getId());
         }
 
         Wallet funding = walletRepository.findBySystemCode(SystemWallets.FUNDING)
