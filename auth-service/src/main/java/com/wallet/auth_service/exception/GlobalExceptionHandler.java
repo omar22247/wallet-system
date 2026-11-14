@@ -51,7 +51,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 : reasonPhrase(statusCode);
         return ResponseEntity.status(statusCode).headers(headers).body(ApiResponse.error(message));
     }
-
+    
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<ApiResponse<Void>> handleUserNotFound(UserNotFoundException ex) {
+        return error(HttpStatus.NOT_FOUND, ex.getMessage());
+    }
 
     @ExceptionHandler(InvalidPasswordChangeException.class)
     public ResponseEntity<ApiResponse<Void>> handleInvalidPasswordChange(InvalidPasswordChangeException ex) {

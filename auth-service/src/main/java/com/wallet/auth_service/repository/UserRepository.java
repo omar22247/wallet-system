@@ -1,6 +1,7 @@
 package com.wallet.auth_service.repository;
 
 import com.wallet.auth_service.entity.User;
+import com.wallet.auth_service.entity.UserStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -37,4 +38,6 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("update User u set u.passwordHash = :hash where u.id = :id")
     int updatePasswordHash(@Param("id") UUID id, @Param("hash") String hash);
+
+    Optional<User> findByEmailAndStatus(String email, UserStatus status);
 }
