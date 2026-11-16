@@ -39,7 +39,18 @@ spring:
                     redis-rate-limiter.burstCapacity: 5
                     redis-rate-limiter.requestedTokens: 1
                     key-resolver: "#{@clientKeyResolver}"
-
+            - id: auth-user-lookup
+              order: -1
+              uri: ${AUTH_SERVICE_URL:http://localhost:8081}
+              predicates:
+                - Path=/api/auth/users/lookup
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    redis-rate-limiter.replenishRate: 1
+                    redis-rate-limiter.burstCapacity: 60
+                    redis-rate-limiter.requestedTokens: 6
+                    key-resolver: "#{@clientKeyResolver}"
             - id: auth-service
               order: 0
               uri: ${AUTH_SERVICE_URL:http://localhost:8081}

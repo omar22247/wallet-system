@@ -132,6 +132,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<ApiResponse<Void>> handleInsufficientBalance(InsufficientBalanceException ex) {
         return error(HttpStatus.UNPROCESSABLE_CONTENT, ex.getMessage());
     }
+
+    @ExceptionHandler(InvalidIdempotencyKeyException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidIdempotencyKey(InvalidIdempotencyKeyException ex) {
+        return error(HttpStatus.BAD_REQUEST, ex.getMessage());
+    }
+
+    @ExceptionHandler(RequestAlreadyProcessedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleAlreadyProcessed(RequestAlreadyProcessedException ex) {
+        return error(HttpStatus.CONFLICT, ex.getMessage());
+    }
+    
+    @ExceptionHandler(IdempotencyKeyReusedException.class)
+    public ResponseEntity<ApiResponse<Void>> handleIdempotencyKeyReused(IdempotencyKeyReusedException ex) {
+        return error(HttpStatus.UNPROCESSABLE_CONTENT, ex.getMessage());
+    }
+
     private static ResponseEntity<ApiResponse<Void>> error(HttpStatus status, String message) {
         return ResponseEntity.status(status).body(ApiResponse.error(message));
     }

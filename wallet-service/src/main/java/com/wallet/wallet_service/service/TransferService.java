@@ -27,12 +27,15 @@ public class TransferService {
     private final WalletRepository walletRepository;
     private final JournalEntryRepository journalEntryRepository;
     private final LedgerEntryRepository ledgerEntryRepository;
+    private final IdempotencyService idempotencyService;
 
     @Transactional
-    public TransferResponse transfer(UUID senderId, TransferRequest request) {
+    public TransferResponse transfer(UUID senderId, UUID idempotencyKey, TransferRequest request) {
 
         UUID recipientId = request.toUserId();
         BigDecimal amount = request.amount();
+
+        idempotencyService.validateKey(idempotencyKey);
 
         if (senderId.equals(recipientId)) {
             throw new SelfTransferException();
@@ -46,6 +49,17 @@ public class TransferService {
         } else {
             recipient = getRecipientWithLock(recipientId);
             sender = getSenderWithLock(senderId);
+        }
+
+        String requestHash = idempotencyService.hash("TRANSFER",
+                recipientId, amount.setScale(2).toPlainString(), request.description());
+        idempotencyService.ensureNotProcessed(senderId, idempotencyKey, requestHash);
+
+        if (!sender.isActive()) {
+            throw new WalletNotActiveException(sender.getId());
+        }
+        if (!recipient.isActive()) {
+            throw new RecipientCannotReceiveException(recipientId);
         }
 
         BigDecimal balance = ledgerEntryRepository.balanceOf(sender.getId());
@@ -63,6 +77,8 @@ public class TransferService {
         journal.assertBalanced();
         JournalEntry saved = journalEntryRepository.save(journal);
 
+        idempotencyService.markProcessed(senderId, idempotencyKey, requestHash);
+
         BigDecimal newBalance = balance.subtract(amount);
 
         log.info("Transfer journal={} from user={} to user={} amount={}",
@@ -72,21 +88,12 @@ public class TransferService {
     }
 
     private Wallet getSenderWithLock(UUID senderId) {
-        Wallet wallet = walletRepository.findByUserIdForUpdate(senderId)
+        return walletRepository.findByUserIdForUpdate(senderId)
                 .orElseThrow(() -> new WalletNotFoundException(senderId));
-        if (!wallet.isActive()) {
-            throw new WalletNotActiveException(wallet.getId());
-        }
-        return wallet;
     }
 
     private Wallet getRecipientWithLock(UUID recipientId) {
-        Wallet wallet = walletRepository.findByUserIdForUpdate(recipientId)
+        return walletRepository.findByUserIdForUpdate(recipientId)
                 .orElseThrow(() -> new RecipientCannotReceiveException(recipientId));
-        if (!wallet.isActive()) {
-            throw new RecipientCannotReceiveException(recipientId);
-        }
-        return wallet;
     }
-
 }

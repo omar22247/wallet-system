@@ -15,7 +15,10 @@ import java.util.UUID;
 
 
 @Entity
-@Table(name = "journal_entries")
+@Table(name = "journal_entries",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_journal_idempotency",
+                columnNames = {"created_by", "idempotency_key"}))
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class JournalEntry {
@@ -86,4 +89,5 @@ public class JournalEntry {
                 .map(LedgerEntry::getAmount)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
+
 }

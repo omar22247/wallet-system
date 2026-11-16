@@ -11,10 +11,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/wallets/me/transfers")
@@ -26,9 +25,10 @@ public class TransferController {
     @PostMapping
     public ResponseEntity<ApiResponse<TransferResponse>> transfer(
             @AuthenticationPrincipal Jwt jwt,
+            @RequestHeader("Idempotency-Key") UUID idempotencyKey,
             @Valid @RequestBody TransferRequest request) {
 
-        TransferResponse result = transferService.transfer(CurrentUser.id(jwt), request);
+        TransferResponse result = transferService.transfer(CurrentUser.id(jwt), idempotencyKey, request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Transfer completed", result));
     }

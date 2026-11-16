@@ -28,14 +28,20 @@ public class TopUpService {
     private final WalletRepository walletRepository;
     private final JournalEntryRepository journalEntryRepository;
     private final LedgerEntryRepository ledgerEntryRepository;
-
+    private final IdempotencyService idempotencyService;
 
     @Transactional
-    public TopUpResponse topUp(UUID adminId, TopUpRequest request) {
-        Wallet target = walletRepository.findByUserId(request.userId())
-                .orElseThrow(
-                        () -> new WalletNotFoundException(request.userId())
-                );
+    public TopUpResponse topUp(UUID adminId, UUID idempotencyKey, TopUpRequest request) {
+
+        idempotencyService.validateKey(idempotencyKey);
+
+        Wallet target = walletRepository.findByUserIdForUpdate(request.userId())
+                .orElseThrow(() -> new WalletNotFoundException(request.userId()));
+
+        String requestHash = idempotencyService.hash("TOP_UP",
+                request.userId(), request.amount().setScale(2).toPlainString(), request.description());
+        idempotencyService.ensureNotProcessed(adminId, idempotencyKey, requestHash);
+
         if (!target.isActive()) {
             throw new WalletNotActiveException(target.getId());
         }
@@ -48,8 +54,9 @@ public class TopUpService {
         JournalEntry journal = JournalEntry.move(
                 JournalType.TOP_UP, description, adminId,
                 funding, target, request.amount());
-
         journalEntryRepository.save(journal);
+
+        idempotencyService.markProcessed(adminId, idempotencyKey, requestHash);
 
         log.info("Top-up journal={} wallet={} amount={} by={}",
                 journal.getId(), target.getId(), request.amount().toPlainString(), adminId);

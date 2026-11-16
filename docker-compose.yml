@@ -32,7 +32,6 @@ services:
       timeout: 5s
       retries: 10
 
-
   rabbitmq:
     <<: *common
     image: rabbitmq:4-management
@@ -86,6 +85,24 @@ services:
         limits:
           memory: 512m
 
+  wallet-service:                                 
+    <<: *common
+    image: ${REGISTRY}/wallet-wallet-service:${IMAGE_TAG}
+    environment:
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/wallet_db
+      SPRING_DATASOURCE_USERNAME: wallet_user
+      SPRING_DATASOURCE_PASSWORD: ${WALLET_DB_PASSWORD}
+      SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://auth-service:8080/.well-known/jwks.json
+      JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=75
+    depends_on:
+      postgres: { condition: service_healthy }
+      auth-service: { condition: service_started }
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+
   gateway:
     <<: *common
     image: ${REGISTRY}/wallet-gateway:${IMAGE_TAG}
@@ -95,17 +112,18 @@ services:
       SPRING_DATA_REDIS_PASSWORD: ${REDIS_PASSWORD}
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://auth-service:8080/.well-known/jwks.json
       AUTH_SERVICE_URL: http://auth-service:8080
+      WALLET_SERVICE_URL: http://wallet-service:8080
       JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=75
     ports:
       - "${GATEWAY_PORT}:8080"
     depends_on:
       redis: { condition: service_healthy }
       auth-service: { condition: service_started }
+      wallet-service: { condition: service_started }
     deploy:
       resources:
         limits:
           memory: 512m
-
 
 networks:
   backend: {}
