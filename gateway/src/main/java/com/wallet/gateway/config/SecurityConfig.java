@@ -37,7 +37,9 @@ public class SecurityConfig {
                                 "/api/auth/register",
                                 "/api/auth/login",
                                 "/api/auth/forgot-password",
-                                "/api/auth/reset-password"
+                                "/api/auth/reset-password",
+                                "/api/auth/register/start",
+                                "/api/auth/register/complete"
                         ).permitAll()
                         .pathMatchers("/actuator/**", "/actuator/health/**").permitAll()
                         .anyExchange().authenticated()

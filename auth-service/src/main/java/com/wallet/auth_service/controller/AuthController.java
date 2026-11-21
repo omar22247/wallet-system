@@ -1,13 +1,12 @@
 package com.wallet.auth_service.controller;
 
-import com.wallet.auth_service.dto.request.ChangePasswordRequest;
-import com.wallet.auth_service.dto.request.LoginRequest;
-import com.wallet.auth_service.dto.request.RegisterRequest;
+import com.wallet.auth_service.dto.request.*;
 import com.wallet.auth_service.dto.response.ApiResponse;
 import com.wallet.auth_service.dto.response.LoginResponse;
 import com.wallet.auth_service.dto.response.MeResponse;
 import com.wallet.auth_service.dto.response.UserResponse;
 import com.wallet.auth_service.service.AuthService;
+import com.wallet.auth_service.service.PasswordResetService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
@@ -23,22 +22,14 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
-@Validated
 public class AuthController {
 
     private final AuthService authService;
-
-    @PostMapping("/register")
-    public ResponseEntity<ApiResponse<UserResponse>> register(@Valid @RequestBody RegisterRequest request) {
-        UserResponse user = authService.register(request);
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(ApiResponse.success("Account created successfully", user));
-    }
+    private final PasswordResetService passwordResetService;
 
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request) {
         LoginResponse tokens = authService.login(request);
-        System.out.println("request: " + request);
         return ResponseEntity.ok(ApiResponse.success("Login successful", tokens));
     }
 
@@ -48,7 +39,18 @@ public class AuthController {
         authService.changePassword(UUID.fromString(jwt.getSubject()), request);
         return ResponseEntity.ok(ApiResponse.success("Password changed successfully", null));
     }
+    @PostMapping("/forgot-password")
+    public ResponseEntity<ApiResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        passwordResetService.requestReset(request.email());
+        return ResponseEntity.accepted()
+                .body(ApiResponse.success("If the email is registered, a reset link has been sent", null));
+    }
 
+    @PostMapping("/reset-password")
+    public ResponseEntity<ApiResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        passwordResetService.resetPassword(request);
+        return ResponseEntity.ok(ApiResponse.success("Password has been reset", null));
+    }
     @GetMapping("/me")
     public ResponseEntity<ApiResponse<MeResponse>> me(@AuthenticationPrincipal Jwt jwt) {
         return ResponseEntity.ok(ApiResponse.success(MeResponse.from(jwt)));

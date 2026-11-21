@@ -40,6 +40,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return ResponseEntity.badRequest().body(ApiResponse.error("Validation failed", errors));
     }
 
+
     @Override
     protected ResponseEntity<Object> handleExceptionInternal(Exception ex,
                                                              Object body,
@@ -51,7 +52,18 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 : reasonPhrase(statusCode);
         return ResponseEntity.status(statusCode).headers(headers).body(ApiResponse.error(message));
     }
-    
+
+    @ExceptionHandler(OtpRequestLimitException.class)
+    public ResponseEntity<ApiResponse<Void>> handleOtpLimit(OtpRequestLimitException ex) {
+        return error(HttpStatus.TOO_MANY_REQUESTS, ex.getMessage());
+    }
+
+    @ExceptionHandler(EventPublishException.class)
+    public ResponseEntity<ApiResponse<Void>> handleEventPublish(EventPublishException ex) {
+        log.error("Event publishing failed: {}", ex.getMessage());
+        return error(HttpStatus.SERVICE_UNAVAILABLE, "Service temporarily unavailable. Please try again");
+    }
+
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ApiResponse<Void>> handleUserNotFound(UserNotFoundException ex) {
         return error(HttpStatus.NOT_FOUND, ex.getMessage());
@@ -88,6 +100,12 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(AccessDeniedException.class)
     public ResponseEntity<ApiResponse<Void>> handleAccessDenied(AccessDeniedException ex) {
         return error(HttpStatus.FORBIDDEN, "Access denied");
+    }
+
+    @ExceptionHandler(InvalidOtpException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInvalidOtp(InvalidOtpException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error(ex.getMessage()));
     }
 
     @ExceptionHandler(DisabledException.class)
