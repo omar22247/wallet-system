@@ -1,11 +1,13 @@
 package com.wallet.wallet_service.service;
 
 import com.wallet.wallet_service.bootstrap.SystemWallets;
+import com.wallet.wallet_service.client.UserDirectory;
 import com.wallet.wallet_service.dto.request.TopUpRequest;
 import com.wallet.wallet_service.dto.response.TopUpResponse;
 import com.wallet.wallet_service.entity.JournalEntry;
 import com.wallet.wallet_service.entity.JournalType;
 import com.wallet.wallet_service.entity.Wallet;
+import com.wallet.wallet_service.exception.RecipientCannotReceiveException;
 import com.wallet.wallet_service.exception.WalletNotActiveException;
 import com.wallet.wallet_service.exception.WalletNotFoundException;
 import com.wallet.wallet_service.repository.JournalEntryRepository;
@@ -29,11 +31,17 @@ public class TopUpService {
     private final JournalEntryRepository journalEntryRepository;
     private final LedgerEntryRepository ledgerEntryRepository;
     private final IdempotencyService idempotencyService;
+    private final UserDirectory userDirectory;
 
     @Transactional
     public TopUpResponse topUp(UUID adminId, UUID idempotencyKey, TopUpRequest request) {
 
         idempotencyService.validateKey(idempotencyKey);
+
+        String recipientEmail = userDirectory.activeEmails(request.userId()).get(request.userId());
+        if (recipientEmail == null) {
+            throw new RecipientCannotReceiveException(request.userId());
+        }
 
         Wallet target = walletRepository.findByUserIdForUpdate(request.userId())
                 .orElseThrow(() -> new WalletNotFoundException(request.userId()));
@@ -53,7 +61,8 @@ public class TopUpService {
 
         JournalEntry journal = JournalEntry.move(
                 JournalType.TOP_UP, description, adminId,
-                funding, target, request.amount());
+                funding, target, request.amount())
+                .parties(null, null, request.userId(), recipientEmail);
         journalEntryRepository.save(journal);
 
         idempotencyService.markProcessed(adminId, idempotencyKey, requestHash);

@@ -16,5 +16,6 @@ public record TransactionRow(
         String description,
         WalletType counterpartyType,
         UUID counterpartyUserId,
+        String counterpartyEmail,
         Instant createdAt
 ) {}

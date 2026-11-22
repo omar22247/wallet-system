@@ -62,4 +62,12 @@ public class Wallet {
     public boolean isActive() {
         return status == WalletStatus.ACTIVE;
     }
+
+    public void freeze() {
+        this.status = WalletStatus.FROZEN;
+    }
+
+    public void unfreeze() {
+        this.status = WalletStatus.ACTIVE;
+    }
 }

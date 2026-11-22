@@ -33,7 +33,10 @@ public interface LedgerEntryRepository extends JpaRepository<LedgerEntry, UUID> 
     @Query(value = """
             select new com.wallet.wallet_service.repository.projection.TransactionRow(
                 j.id, j.type, mine.entryType, mine.amount, j.description,
-                otherWallet.type, otherWallet.userId, mine.createdAt)
+                otherWallet.type, otherWallet.userId,
+                case when mine.entryType = com.wallet.wallet_service.entity.EntryType.CREDIT
+                     then j.senderEmail else j.recipientEmail end,
+                mine.createdAt)
             from LedgerEntry mine
             join mine.journalEntry j
             join LedgerEntry other
@@ -49,7 +52,10 @@ public interface LedgerEntryRepository extends JpaRepository<LedgerEntry, UUID> 
     @Query("""
             select new com.wallet.wallet_service.repository.projection.TransactionRow(
                 j.id, j.type, mine.entryType, mine.amount, j.description,
-                otherWallet.type, otherWallet.userId, mine.createdAt)
+                otherWallet.type, otherWallet.userId,
+                case when mine.entryType = com.wallet.wallet_service.entity.EntryType.CREDIT
+                     then j.senderEmail else j.recipientEmail end,
+                mine.createdAt)
             from LedgerEntry mine
             join mine.journalEntry j
             join LedgerEntry other

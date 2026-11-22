@@ -74,9 +74,40 @@ services:
       SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
       JWT_PRIVATE_KEY_PATH: /run/keys/private.pem
       JWT_PUBLIC_KEY_PATH: /run/keys/public.pem
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      SPRING_DATA_REDIS_HOST: redis
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      OTP_SECRET: ${OTP_SECRET}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
       JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=75
     volumes:
       - ./keys:/run/keys:ro
+    depends_on:
+      postgres: { condition: service_healthy }
+      rabbitmq: { condition: service_healthy }
+      redis: { condition: service_healthy }
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+
+  notification-service:
+    <<: *common
+    image: ${REGISTRY}/wallet-notification-service:${IMAGE_TAG}
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/notification_db
+      SPRING_DATASOURCE_USERNAME: notification_user
+      SPRING_DATASOURCE_PASSWORD: ${NOTIFICATION_DB_PASSWORD}
+      SPRING_RABBITMQ_HOST: rabbitmq
+      SPRING_RABBITMQ_USERNAME: ${RABBITMQ_USER}
+      SPRING_RABBITMQ_PASSWORD: ${RABBITMQ_PASSWORD}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      MAIL_FROM: ${MAIL_FROM}
+      JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=75
     depends_on:
       postgres: { condition: service_healthy }
       rabbitmq: { condition: service_healthy }
@@ -85,7 +116,7 @@ services:
         limits:
           memory: 512m
 
-  wallet-service:                                 
+  wallet-service:                              
     <<: *common
     image: ${REGISTRY}/wallet-wallet-service:${IMAGE_TAG}
     environment:
@@ -95,6 +126,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${WALLET_DB_PASSWORD}
       SPRING_SECURITY_OAUTH2_RESOURCESERVER_JWT_JWK_SET_URI: http://auth-service:8080/.well-known/jwks.json
       JAVA_TOOL_OPTIONS: -XX:MaxRAMPercentage=75
+      AUTH_SERVICE_URL: http://auth-service:8080
     depends_on:
       postgres: { condition: service_healthy }
       auth-service: { condition: service_started }
@@ -124,6 +156,15 @@ services:
       resources:
         limits:
           memory: 512m
+
+  frontend:
+    <<: *common
+    build: ./frontend
+    image: ${REGISTRY}/wallet-frontend:${IMAGE_TAG}
+    ports:
+      - "${FRONTEND_PORT:-3000}:80"
+    depends_on:
+      gateway: { condition: service_started }
 
 networks:
   backend: {}

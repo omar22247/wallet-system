@@ -35,7 +35,7 @@ public class PasswordResetService {
         String email = rawEmail.trim().toLowerCase();
         if (email.isEmpty()) return;
 
-        if (!tokenStore.tryAcquireCooldown(email)) return;
+        if (!tokenStore.tryAcquire(email)) return;
 
         Optional<User> found = userRepository.findByEmailAndStatus(email, UserStatus.ACTIVE);
         if (found.isEmpty()) return;
@@ -45,7 +45,9 @@ public class PasswordResetService {
         Instant now = Instant.now();
         var event = new PasswordResetRequestedEvent(
                 UUID.randomUUID(),
+                user.getId(),
                 email,
+                user.getFullName(),
                 props.linkBaseUrl() + "#token=" + token,
                 now.plus(props.ttl()),
                 now);

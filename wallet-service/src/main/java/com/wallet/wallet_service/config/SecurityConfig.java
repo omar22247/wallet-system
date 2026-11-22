@@ -35,6 +35,7 @@ public class SecurityConfig {
                     .authorizeHttpRequests(auth->auth
                             .requestMatchers("/actuator/health", "/actuator/health/**").permitAll()
                             .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                            .requestMatchers("/api/wallets/**").hasRole("USER")
                             .anyRequest().authenticated()
                     )
                     .exceptionHandling(ex -> ex

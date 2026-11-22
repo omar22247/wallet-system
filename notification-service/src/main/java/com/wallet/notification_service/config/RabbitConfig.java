@@ -25,8 +25,8 @@ public class RabbitConfig {
     public static final String PASSWORD_RESET_QUEUE = "notification.password_reset";
     public static final String PASSWORD_RESET_KEY = "auth.password_reset_requested";
 
-    public static final String REGISTRATION_OTP_QUEUE = "notification.registration_otp";   // اسم الصندوق
-    public static final String REGISTRATION_OTP_KEY = "auth.registration_otp_requested";   // العنوان
+    public static final String REGISTRATION_OTP_QUEUE = "notification.registration_otp";
+    public static final String REGISTRATION_OTP_KEY = "auth.registration_otp_requested";
 
     @Bean
     public TopicExchange eventsExchange() {

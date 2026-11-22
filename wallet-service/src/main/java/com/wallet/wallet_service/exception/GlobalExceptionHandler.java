@@ -1,6 +1,7 @@
 package com.wallet.wallet_service.exception;
 
 import com.wallet.wallet_service.dto.response.ApiResponse;
+import feign.FeignException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -116,6 +117,13 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
 
 
+
+    @ExceptionHandler(FeignException.class)
+    public ResponseEntity<ApiResponse<Void>> handleFeign(FeignException ex) {
+        log.error("Auth service call failed: status={}", ex.status(), ex);
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ApiResponse.error("Service is temporarily unavailable. Please try again."));
+    }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleUnexpected(Exception ex) {

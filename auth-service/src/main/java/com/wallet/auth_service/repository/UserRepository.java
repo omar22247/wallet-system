@@ -1,5 +1,6 @@
 package com.wallet.auth_service.repository;
 
+import com.wallet.auth_service.entity.Role;
 import com.wallet.auth_service.entity.User;
 import com.wallet.auth_service.entity.UserStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -9,6 +10,8 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -17,6 +20,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByEmail(String email);
 
     boolean existsByEmail(String email);
+
+    boolean existsByRole(Role role);
 
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("update User u set u.failedLoginAttempts = u.failedLoginAttempts + 1 where u.email = :email")
@@ -39,5 +44,7 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     @Query("update User u set u.passwordHash = :hash where u.id = :id")
     int updatePasswordHash(@Param("id") UUID id, @Param("hash") String hash);
 
+    List<User> findAllByIdInAndStatus(Collection<UUID> ids, UserStatus status);
+    
     Optional<User> findByEmailAndStatus(String email, UserStatus status);
 }

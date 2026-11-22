@@ -27,6 +27,61 @@ spring:
             connect-timeout: 2000
             response-timeout: 10S
           routes:
+            - id: auth-register-start
+              uri: ${AUTH_SERVICE_URL:http://localhost:8081}
+              order: -1
+              predicates:
+                - Path=/api/auth/register/start
+                - Method=POST
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@ipKeyResolver}"
+                    redis-rate-limiter.replenishRate: 1
+                    redis-rate-limiter.burstCapacity: 500
+                    redis-rate-limiter.requestedTokens: 50
+
+            - id: auth-register-complete
+              uri: ${AUTH_SERVICE_URL:http://localhost:8081}
+              order: -1
+              predicates:
+                - Path=/api/auth/register/complete
+                - Method=POST
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@ipKeyResolver}"
+                    redis-rate-limiter.replenishRate: 1
+                    redis-rate-limiter.burstCapacity: 450
+                    redis-rate-limiter.requestedTokens: 30
+
+            - id: auth-forgot-password
+              uri: ${AUTH_SERVICE_URL:http://localhost:8081}
+              order: -1
+              predicates:
+                - Path=/api/auth/forgot-password
+                - Method=POST
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@ipKeyResolver}"
+                    redis-rate-limiter.replenishRate: 1
+                    redis-rate-limiter.burstCapacity: 500
+                    redis-rate-limiter.requestedTokens: 50
+
+            - id: auth-reset-password
+              uri: ${AUTH_SERVICE_URL:http://localhost:8081}
+              order: -1
+              predicates:
+                - Path=/api/auth/reset-password
+                - Method=POST
+              filters:
+                - name: RequestRateLimiter
+                  args:
+                    key-resolver: "#{@ipKeyResolver}"
+                    redis-rate-limiter.replenishRate: 1
+                    redis-rate-limiter.burstCapacity: 450
+                    redis-rate-limiter.requestedTokens: 30
             - id: auth-login
               order: -1
               uri: ${AUTH_SERVICE_URL:http://localhost:8081}
@@ -36,8 +91,8 @@ spring:
                 - name: RequestRateLimiter
                   args:
                     redis-rate-limiter.replenishRate: 1
-                    redis-rate-limiter.burstCapacity: 5
-                    redis-rate-limiter.requestedTokens: 1
+                    redis-rate-limiter.burstCapacity: 50
+                    redis-rate-limiter.requestedTokens: 5
                     key-resolver: "#{@clientKeyResolver}"
             - id: auth-user-lookup
               order: -1
@@ -48,9 +103,10 @@ spring:
                 - name: RequestRateLimiter
                   args:
                     redis-rate-limiter.replenishRate: 1
-                    redis-rate-limiter.burstCapacity: 60
-                    redis-rate-limiter.requestedTokens: 6
+                    redis-rate-limiter.burstCapacity: 20
+                    redis-rate-limiter.requestedTokens: 2
                     key-resolver: "#{@clientKeyResolver}"
+
             - id: auth-service
               order: 0
               uri: ${AUTH_SERVICE_URL:http://localhost:8081}

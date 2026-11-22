@@ -15,10 +15,7 @@ import java.util.UUID;
 
 
 @Entity
-@Table(name = "journal_entries",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_journal_idempotency",
-                columnNames = {"created_by", "idempotency_key"}))
+@Table(name = "journal_entries")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class JournalEntry {
@@ -36,6 +33,18 @@ public class JournalEntry {
 
     @Column(name = "created_by", updatable = false)
     private UUID createdBy;
+
+    @Column(name = "sender_user_id", updatable = false)
+    private UUID senderUserId;
+
+    @Column(name = "sender_email", updatable = false, length = 255)
+    private String senderEmail;
+
+    @Column(name = "recipient_user_id", updatable = false)
+    private UUID recipientUserId;
+
+    @Column(name = "recipient_email", updatable = false, length = 255)
+    private String recipientEmail;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -56,6 +65,14 @@ public class JournalEntry {
         return create(type, description, createdBy)
                 .debit(from, amount)
                 .credit(to, amount);
+    }
+
+    public JournalEntry parties(UUID senderUserId, String senderEmail, UUID recipientUserId, String recipientEmail) {
+        this.senderUserId = senderUserId;
+        this.senderEmail = senderEmail;
+        this.recipientUserId = recipientUserId;
+        this.recipientEmail = recipientEmail;
+        return this;
     }
 
     public JournalEntry debit(Wallet wallet, BigDecimal amount) {

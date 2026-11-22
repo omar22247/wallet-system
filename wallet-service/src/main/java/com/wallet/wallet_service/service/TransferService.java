@@ -1,5 +1,6 @@
 package com.wallet.wallet_service.service;
 
+import com.wallet.wallet_service.client.UserDirectory;
 import com.wallet.wallet_service.dto.request.TransferRequest;
 import com.wallet.wallet_service.dto.response.TransferResponse;
 import com.wallet.wallet_service.entity.JournalEntry;
@@ -12,10 +13,12 @@ import com.wallet.wallet_service.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -28,6 +31,7 @@ public class TransferService {
     private final JournalEntryRepository journalEntryRepository;
     private final LedgerEntryRepository ledgerEntryRepository;
     private final IdempotencyService idempotencyService;
+    private final UserDirectory userDirectory;
 
     @Transactional
     public TransferResponse transfer(UUID senderId, UUID idempotencyKey, TransferRequest request) {
@@ -39,6 +43,14 @@ public class TransferService {
 
         if (senderId.equals(recipientId)) {
             throw new SelfTransferException();
+        }
+
+        Map<UUID, String> emails = userDirectory.activeEmails(senderId, recipientId);
+        if (!emails.containsKey(senderId)) {
+            throw new AccessDeniedException("Sender account is not active");
+        }
+        if (!emails.containsKey(recipientId)) {
+            throw new RecipientCannotReceiveException(recipientId);
         }
 
         Wallet sender;
@@ -72,7 +84,8 @@ public class TransferService {
                 request.description() != null ? request.description() : "Transfer",
                 senderId
         );
-        journal.debit(sender, amount)
+        journal.parties(senderId, emails.get(senderId), recipientId, emails.get(recipientId))
+                .debit(sender, amount)
                 .credit(recipient, amount);
         journal.assertBalanced();
         JournalEntry saved = journalEntryRepository.save(journal);
@@ -84,7 +97,7 @@ public class TransferService {
         log.info("Transfer journal={} from user={} to user={} amount={}",
                 saved.getId(), senderId, recipientId, amount.toPlainString());
 
-        return TransferResponse.of(saved.getId(), recipientId, amount, newBalance);
+        return TransferResponse.of(saved.getId(), recipientId, emails.get(recipientId), amount, newBalance);
     }
 
     private Wallet getSenderWithLock(UUID senderId) {

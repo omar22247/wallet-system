@@ -23,7 +23,7 @@ public record TransactionResponse(
                 row.entryType() == EntryType.CREDIT ? "IN" : "OUT",
                 row.amount().toPlainString(),
                 row.description(),
-                CounterpartyResponse.of(row.counterpartyType(), row.counterpartyUserId()),
+                CounterpartyResponse.of(row.counterpartyType(), row.counterpartyUserId(), row.counterpartyEmail()),
                 row.createdAt()
         );
     }
