@@ -21,8 +21,6 @@ services:
       AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD}
       WALLET_DB_PASSWORD: ${WALLET_DB_PASSWORD}
       NOTIFICATION_DB_PASSWORD: ${NOTIFICATION_DB_PASSWORD}
-      AUDIT_OWNER_PASSWORD: ${AUDIT_OWNER_PASSWORD}
-      AUDIT_APP_PASSWORD: ${AUDIT_APP_PASSWORD}
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - ./init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
